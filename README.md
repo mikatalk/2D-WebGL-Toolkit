@@ -27,21 +27,12 @@ npm run build
 
 ```
 // initialize the stage
-Stage.initialize(document.getElementById('canvas'), {
-    contain: true
-});
+Stage.initialize(canvas), { contain: true });
 
 // add layer objects to the display list
-this.bg = new LayerImage( Stage.getGL(), bgImg );
-Stage.addLayer( this.bg );
-
-this.ball = new LayerSimpleBall( Stage.getGL() );
-this.ball.radius = 25.0;
-Stage.addLayer( this.ball );
-
-this.ball2 = new LayerBallTrail( Stage.getGL() );
-this.ball2.radius = 50.0;
-Stage.addLayer( this.ball2 );
+Stage.addLayer( new LayerImage( Stage.getGL(), bgImg ) );
+Stage.addLayer( new LayerSimpleBall( Stage.getGL() ) );
+Stage.addLayer( new LayerBallTrail( Stage.getGL() ) );
 
 // hook up with the render loop
 Stage.beforeUpdateHandler( this.update.bind(this) );
