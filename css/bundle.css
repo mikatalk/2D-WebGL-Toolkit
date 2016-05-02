@@ -1,0 +1,2 @@
+body,html{margin:0;padding:0;border:none;overflow:hidden;width:100%;height:100%;position:relative;background:#41819c}#container{right:0;bottom:0}#container,canvas{margin:0;padding:0;border:0;position:absolute;top:0;left:0}canvas{background:transparent;display:block}#info{width:100%;padding:2px}#debug,#info{position:absolute;bottom:0}#debug{display:none;left:0;padding:5px}a{color:#fff}#stats{position:absolute;top:auto!important;bottom:-35px}
+/*# sourceMappingURL=bundle.css.map*/
