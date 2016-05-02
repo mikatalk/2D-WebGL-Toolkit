@@ -47,21 +47,11 @@ const FRAGMENT_MERGE = `
 
         if ( gl_FragColor.a < 0.1 ) gl_FragColor = vec4(0.0);
 
-
-        // gl_FragColor = vec4(0.0);
-        // gl_FragColor = mix(texture2D(ball, uv), texture2D(previous, uv), .5);
-
-
-        // gl_FragColor += texture2D(ball, uv);
-        // gl_FragColor += texture2D(previous, uv);
-        // gl_FragColor = clamp( gl_FragColor + texture2D(previous, uv - vec4(.2)), 0.0, 1.0);
-        
-        // gl_FragColor -= vec4(.6);
-        // gl_FragColor = vec4(1.0);
     }
 `;
 
-const FRAGMENT_PREVIOUS_FRAME = `
+function getFragmentPreviousFrame (trail) {
+    return `
 
     precision mediump float;
 
@@ -69,12 +59,34 @@ const FRAGMENT_PREVIOUS_FRAME = `
 
     uniform sampler2D previous;
 
+    const float trail = ${trail}; 
+
     void main() { 
-        gl_FragColor = texture2D(previous, uv);
-        gl_FragColor.a -= 0.01;
-        if ( gl_FragColor.a < 0.1 ) gl_FragColor = vec4(0.0);
+        // vec4 color = texture2D(previous, uv);
+
+        vec2 onePixel = vec2(1.0, 1.0) / 512.0;
+        float blur = 0.333;
+        float kernelWeight = .4;
+        vec4 color = texture2D(previous, uv + onePixel * vec2(-1, -1)) * blur +
+        texture2D(previous, uv + onePixel * vec2( 0, -1)) * blur +
+        texture2D(previous, uv + onePixel * vec2( 1, -1)) * blur +
+        texture2D(previous, uv + onePixel * vec2(-1,  0)) * blur +
+        texture2D(previous, uv + onePixel * vec2( 0,  0)) * blur +
+        texture2D(previous, uv + onePixel * vec2( 1,  0)) * blur +
+        texture2D(previous, uv + onePixel * vec2(-1,  1)) * blur +
+        texture2D(previous, uv + onePixel * vec2( 0,  1)) * blur +
+        texture2D(previous, uv + onePixel * vec2( 1,  1)) * blur ;
+        color *= kernelWeight;
+        color.a -= trail;
+        color.r = color.a;
+        color.g = color.a*.4;
+        color.b = color.a;
+        color.a = color.a;
+        gl_FragColor = color;
+
     }
 `;
+}
 
 const VERTEX = `
     
@@ -96,9 +108,13 @@ const VERTEX = `
 
 export default class LayerSimpleBall extends Layer {
 
-    constructor (gl) {
+    constructor (gl, radius, trail) {
         
         super(gl);
+
+        this.lifetime = 0;
+
+        this.dot = new Float32Array([0.5, 0.5, radius, trail]); // x, y, radius, trail
 
         /** Render pipeline *********************************
           *     coordinates             >> BallRTT          *
@@ -119,9 +135,6 @@ export default class LayerSimpleBall extends Layer {
         /** Previous **/
         this.pointersPreviousFrame = this.initShaderPreviousFrame( gl );       
         
-        this.lifetime = 0;
-
-        this.dot = new Float32Array([0.5, 0.5, 30.0, .5]); // x, y, radius, trail
     }
 
     initTextureBuffers (gl) {
@@ -226,8 +239,9 @@ export default class LayerSimpleBall extends Layer {
     }
         
     initShaderPreviousFrame (gl) {
+
         // load and compile the fragment and vertex shader
-        let fragmentShader = super.createShader( FRAGMENT_PREVIOUS_FRAME, gl.FRAGMENT_SHADER);
+        let fragmentShader = super.createShader( getFragmentPreviousFrame(this.dot[3].toFixed(2)), gl.FRAGMENT_SHADER);
         let vertexShader = super.createShader( VERTEX, gl.VERTEX_SHADER);
 
         this.programPreviousFrame = gl.createProgram();

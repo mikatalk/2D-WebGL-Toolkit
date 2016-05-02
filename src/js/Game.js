@@ -28,10 +28,15 @@ export default class Game {
         this.ball.radius = 25.0;
         Stage.addLayer( this.ball );
 
-        this.ball2 = new LayerBallTrail( Stage.getGL() );
-        this.ball2.radius = 50.0;
-        Stage.addLayer( this.ball2 );
-
+        this.balls = [];
+        for ( var i=0,l=1; i<l; i++ ) {
+            let ball = new LayerBallTrail( Stage.getGL(), 20, .2 );
+            ball.speedX = 2;
+            ball.speedY = 3;
+            Stage.addLayer( ball );
+            this.balls.push( ball );
+        }
+        
         Stage.beforeUpdateHandler( this.update.bind(this) );
         Stage.afterUpdateHandler( null );
 
@@ -59,8 +64,10 @@ export default class Game {
         this.ball.x = (Math.sin(this.lifetime*3)+1)/2*.8+.1;
         this.ball.y = (Math.sin(this.lifetime*2.6)+1)/2*.8+.1;
 
-        this.ball2.x = (Math.sin(this.lifetime*4.6)+1)/2*.8+.1;
-        this.ball2.y = (Math.sin(this.lifetime*3.9)+1)/2*.8+.1;
+        for ( let ball of this.balls ) {
+            ball.x = (Math.sin(this.lifetime*ball.speedX)+1)/2*.8+.1;
+            ball.y = (Math.sin(this.lifetime*ball.speedY)+1)/2*.8+.1;
+        }
 
         this.stats.update();
 
