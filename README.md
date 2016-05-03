@@ -11,16 +11,16 @@ A lightweight foundation for your next WebGL based project.
 npm install
 ```
 
-### Start Dev Server 
-
-```
-npm run dev
-```
-
 ### Build Prod Version
 
 ```
 npm run build
+```
+
+### Start Dev Server (make sure to install/build project before)
+
+```
+npm run dev
 ```
 
 ### The 'framework' part:
