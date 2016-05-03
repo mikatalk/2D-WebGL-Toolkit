@@ -29,17 +29,15 @@ const VERTEX = `
     
     precision mediump float;
 
-    attribute vec3 vertexPosition;
-    uniform mat4 modelViewMatrix;
-    uniform mat4 projectionMatrix;
-
+    const vec2 mid=vec2(0.5,0.5);
+    attribute vec2 vertexPosition;
     varying vec2 uv;
-
-    void main(void) {
-        uv = vertexPosition.xy+.5;
-        uv.y = (uv.y-1.0) * -1.0; // make top left the origin
-        gl_Position = projectionMatrix * modelViewMatrix * vec4(vertexPosition, 1.0);
+    
+    void main() {
+       uv = vertexPosition.xy * mid + mid; // scale vertex attribute to [0-1] range
+       gl_Position = vec4(vertexPosition.xy,0.0,1.0);
     }
+    
 `;
 
 
@@ -72,9 +70,6 @@ export default class LayerSimpleBall extends Layer {
         this.shaderVertexPositionAttribute = gl.getAttribLocation(this.program, 'vertexPosition');
         gl.enableVertexAttribArray(this.shaderVertexPositionAttribute);
         
-        this.shaderProjectionMatrixUniform = gl.getUniformLocation(this.program, 'projectionMatrix');
-        this.shaderModelViewMatrixUniform = gl.getUniformLocation(this.program, 'modelViewMatrix');
-
         if (!gl.getProgramParameter(this.program, gl.LINK_STATUS)) {
             console.error( '[LayerBall] Could not initialize shaders' );
         }
@@ -96,8 +91,6 @@ export default class LayerSimpleBall extends Layer {
 
         // bind comon attributes and uniforms
         gl.vertexAttribPointer(this.shaderVertexPositionAttribute, this.geometry.vertSize, gl.FLOAT, false, 0, 0);
-        gl.uniformMatrix4fv(this.shaderProjectionMatrixUniform, false, Stage.getRenderer().projectionMatrix);
-        gl.uniformMatrix4fv(this.shaderModelViewMatrixUniform, false, Stage.getRenderer().modelViewMatrix);
 
         // bind updated ball properties
         gl.uniform4fv(gl.getUniformLocation(this.program, "dot"), this.dot);

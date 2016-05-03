@@ -11,7 +11,6 @@ export default class Renderer {
 
         this.gl = this.initWebGL( canvas );
         this.initViewport( this.gl, canvas );
-        this.initMatrices();
 
         window.addEventListener( 'resize', this.onWindowResize.bind(this), false );
         this.onWindowResize();
@@ -42,23 +41,6 @@ export default class Renderer {
 
     initViewport (gl, canvas) {
         gl.viewport(0, 0, canvas.width, canvas.height);
-    }
-
-    initMatrices () {
-
-        // The transform matrix for the square - translate back in Z for the camera
-        this.modelViewMatrix = new Float32Array(
-               [1, 0, 0, 0,
-                0, 1, 0, 0, 
-                0, 0, 1, 0, 
-                0, 0, -1.2, 1]);
-       
-        // The projection matrix (for a 45 degree field of view)
-        this.projectionMatrix = new Float32Array(
-               [2.41421, 0, 0, 0,
-                0, 2.41421, 0, 0,
-                0, 0, -1.002002, -1, 
-                0, 0, -0.2002002, 0]);
     }
 
     clear () {

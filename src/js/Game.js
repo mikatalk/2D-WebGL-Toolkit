@@ -30,7 +30,7 @@ export default class Game {
 
         this.balls = [];
         for ( var i=0,l=1; i<l; i++ ) {
-            let ball = new LayerBallTrail( Stage.getGL(), 20, .2 );
+            let ball = new LayerBallTrail( Stage.getGL(), 20, .01 );
             ball.speedX = 2;
             ball.speedY = 3;
             Stage.addLayer( ball );

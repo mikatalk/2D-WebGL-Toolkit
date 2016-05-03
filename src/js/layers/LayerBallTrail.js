@@ -13,10 +13,8 @@ const FRAGMENT_BALL = `
     
     void main() {
         vec4 color = vec4(0.0);
-        float radius = dot.z; // get the radius from dot[2]
-        vec2 pixelRatio = vec2(1.0, 1.0) / vec2(512.0, 512.0) * radius;
-        float b = ( 1.0 - length( ( dot.xy - uv ) / pixelRatio ) );
-        if ( b < .1 ) b = .0; 
+        float radius = 1.0 / 512.0 * dot.z;
+        float b = ( 1.0 - length( ( dot.xy - uv ) / radius ) );
         color.r = b;
         color.g = b*.4;
         color.b = b;
@@ -35,17 +33,16 @@ const FRAGMENT_MERGE = `
     uniform sampler2D previous;
 
     void main() { 
-        vec4 color = vec4(0.0);
-        color.a = texture2D(ball, uv).a + texture2D(previous, uv).a;
-        float b = color.a;
-        color.r = b;
-        color.g = b*.4;
-        color.b = b;
-        color.a = b;
-        gl_FragColor = color;
 
+        vec4 colorBall = texture2D(ball, uv);
+        vec4 colorPrevious = texture2D(previous, uv);
 
-        if ( gl_FragColor.a < 0.1 ) gl_FragColor = vec4(0.0);
+        gl_FragColor = vec4(0.0);
+        gl_FragColor.a = colorBall.a + colorPrevious.a;
+
+        gl_FragColor.r = gl_FragColor.a;
+        gl_FragColor.g = gl_FragColor.a*.4;
+        gl_FragColor.b = gl_FragColor.a;
 
     }
 `;
@@ -60,13 +57,12 @@ function getFragmentPreviousFrame (trail) {
     uniform sampler2D previous;
 
     const float trail = ${trail}; 
-
+    const float blur = 0.125;
+    const float weight = .88;
+    
     void main() { 
-        // vec4 color = texture2D(previous, uv);
-
-        vec2 onePixel = vec2(1.0, 1.0) / 512.0;
-        float blur = 0.333;
-        float kernelWeight = .4;
+        
+        vec2 onePixel = vec2(1.0, 1.0) / vec2(512., 512.);
         vec4 color = texture2D(previous, uv + onePixel * vec2(-1, -1)) * blur +
         texture2D(previous, uv + onePixel * vec2( 0, -1)) * blur +
         texture2D(previous, uv + onePixel * vec2( 1, -1)) * blur +
@@ -76,14 +72,14 @@ function getFragmentPreviousFrame (trail) {
         texture2D(previous, uv + onePixel * vec2(-1,  1)) * blur +
         texture2D(previous, uv + onePixel * vec2( 0,  1)) * blur +
         texture2D(previous, uv + onePixel * vec2( 1,  1)) * blur ;
-        color *= kernelWeight;
-        color.a -= trail;
-        color.r = color.a;
-        color.g = color.a*.4;
-        color.b = color.a;
-        color.a = color.a;
+        color *= weight;
+        
         gl_FragColor = color;
+        gl_FragColor.a -= trail;
 
+        if ( gl_FragColor.a < 0.2 ) gl_FragColor = vec4(0.0);
+        // if ( gl_FragColor.a < 0.101 && gl_FragColor.a > 0.1 ) gl_FragColor = vec4(0.101/ gl_FragColor.a, .101/ gl_FragColor.a, .101/ gl_FragColor.a, .101/ gl_FragColor.a);
+        // if ( gl_FragColor.a < 0.101 && gl_FragColor.a > 0.1 ) gl_FragColor = vec4(1.0, 1.0, 1.0, 1.0);
     }
 `;
 }
@@ -92,19 +88,16 @@ const VERTEX = `
     
     precision mediump float;
 
-    attribute vec3 vertexPosition;
-    uniform mat4 modelViewMatrix;
-    uniform mat4 projectionMatrix;
-
+    const vec2 mid=vec2(0.5,0.5);
+    attribute vec2 vertexPosition;
     varying vec2 uv;
-
-    void main(void) {
-        uv = vertexPosition.xy+.5;
-        // uv.y = (uv.y-1.0) * -1.0; // make top left the origin
-        gl_Position = projectionMatrix * modelViewMatrix * vec4(vertexPosition, 1.0);
+    
+    void main() {
+       uv = vertexPosition.xy * mid + mid; // scale vertex attribute to [0-1] range
+       gl_Position = vec4(vertexPosition.xy,0.0,1.0);
     }
-`;
 
+`;
 
 export default class LayerSimpleBall extends Layer {
 
@@ -200,8 +193,6 @@ export default class LayerSimpleBall extends Layer {
         // get pointers to the shader params
         let pointers = {
             'vertexPosition': gl.getAttribLocation(this.programBall, 'vertexPosition'),
-            'projectionMatrix': gl.getUniformLocation(this.programBall, 'projectionMatrix'),
-            'modelViewMatrix': gl.getUniformLocation(this.programBall, 'modelViewMatrix'),
             'dot': gl.getUniformLocation(this.programBall, 'dot'),
         };
 
@@ -225,8 +216,6 @@ export default class LayerSimpleBall extends Layer {
         // get pointers to the shader params
         let pointers = {
             'vertexPosition': gl.getAttribLocation(this.programMerge, 'vertexPosition'),
-            'projectionMatrix': gl.getUniformLocation(this.programMerge, 'projectionMatrix'),
-            'modelViewMatrix': gl.getUniformLocation(this.programMerge, 'modelViewMatrix'),
             'ball': gl.getUniformLocation(this.programMerge, 'ball'),
             'previous': gl.getUniformLocation(this.programMerge, 'previous')
         };
@@ -253,8 +242,6 @@ export default class LayerSimpleBall extends Layer {
         // get pointers to the shader params
         let pointers = {
             'vertexPosition': gl.getAttribLocation(this.programPreviousFrame, 'vertexPosition'),
-            'projectionMatrix': gl.getUniformLocation(this.programPreviousFrame, 'projectionMatrix'),
-            'modelViewMatrix': gl.getUniformLocation(this.programPreviousFrame, 'modelViewMatrix'),
             'previous': gl.getUniformLocation(this.programPreviousFrame, 'previous')
         };
 
@@ -277,59 +264,50 @@ export default class LayerSimpleBall extends Layer {
    
         let gl = this.gl;
 
-        // this.gl.blendFunc(this.gl.SRC_ALPHA, this.gl.DEST_ALPHA);
-        this.gl.blendFunc(this.gl.SRC_ALPHA_SATURATE, this.gl.ONE_MINUS_SRC_ALPHA);
+        gl.blendEquation( gl.FUNC_ADD );
+        gl.blendFunc(gl.ONE, gl.DST_ALPHA);
+
+        gl.bindBuffer( gl.ARRAY_BUFFER, this.geometry.buffer );
 
         /*     coordinates             >> BallRTT          */
-        gl.bindFramebuffer(gl.FRAMEBUFFER, this.ballFrameBuffer );
-        gl.bindBuffer(gl.ARRAY_BUFFER, this.geometry.buffer );
+        gl.useProgram( this.programBall );
+        gl.vertexAttribPointer( this.pointersBall.vertexPosition, this.geometry.vertSize, gl.FLOAT, false, 0, 0 );
+        gl.uniform4fv( this.pointersBall.dot, this.dot );  
+        gl.bindFramebuffer( gl.FRAMEBUFFER, this.ballFrameBuffer );
         gl.clearColor(0.0, 0.0, 0.0, 0.0);
         gl.clear(gl.COLOR_BUFFER_BIT);
-        gl.useProgram(this.programBall);
-        gl.vertexAttribPointer(this.pointersBall.vertexPosition, this.geometry.vertSize, gl.FLOAT, false, 0, 0);
-        gl.uniformMatrix4fv(this.pointersBall.projectionMatrix, false, Stage.getRenderer().projectionMatrix);
-        gl.uniformMatrix4fv(this.pointersBall.modelViewMatrix, false, Stage.getRenderer().modelViewMatrix);
-        gl.uniform4fv(this.pointersBall.dot, this.dot);  
-        gl.drawArrays(this.geometry.primtype, 0, this.geometry.nVerts);
-        gl.bindFramebuffer(gl.FRAMEBUFFER, null);
-        gl.bindBuffer(gl.ARRAY_BUFFER, null);
-        
-
+        gl.drawArrays( this.geometry.primtype, 0, this.geometry.nVerts );
+        gl.bindFramebuffer( gl.FRAMEBUFFER, null );
 
         /*     PreviousRTT + BallRTT   >> MergeRTT         */
         gl.bindFramebuffer(gl.FRAMEBUFFER,  this.mergeFrameBuffer );
-        gl.bindBuffer(gl.ARRAY_BUFFER, this.geometry.buffer);
-        gl.clearColor(0.0, 0.0, 0.0, 0.0);
-        gl.clear(gl.COLOR_BUFFER_BIT);
+        
         gl.useProgram(this.programMerge);
         gl.vertexAttribPointer(this.pointersMerge.vertexPosition, this.geometry.vertSize, gl.FLOAT, false, 0, 0);
-        gl.uniformMatrix4fv(this.pointersMerge.projectionMatrix, false, Stage.getRenderer().projectionMatrix);
-        gl.uniformMatrix4fv(this.pointersMerge.modelViewMatrix, false, Stage.getRenderer().modelViewMatrix);
         gl.uniform1i(this.pointersMerge.ball, 0);  // texture unit 0
         gl.uniform1i(this.pointersMerge.previous, 1);  // texture unit 1
         gl.activeTexture(gl.TEXTURE0);
         gl.bindTexture(gl.TEXTURE_2D, this.ballRTT);
         gl.activeTexture(gl.TEXTURE1);
         gl.bindTexture(gl.TEXTURE_2D, this.previousRTT);
-        gl.drawArrays(this.geometry.primtype, 0, this.geometry.nVerts);
-
-        
-        /*     MergeRTT                >> previousRTT      */
-        gl.bindFramebuffer(gl.FRAMEBUFFER, this.previousFrameBuffer);
-        gl.bindBuffer(gl.ARRAY_BUFFER, this.geometry.buffer);
         gl.clearColor(0.0, 0.0, 0.0, 0.0);
         gl.clear(gl.COLOR_BUFFER_BIT);
+        gl.drawArrays(this.geometry.primtype, 0, this.geometry.nVerts);
+ 
+        /*     MergeRTT                >> previousRTT      */
+        gl.bindFramebuffer(gl.FRAMEBUFFER, this.previousFrameBuffer);        
         gl.useProgram(this.programPreviousFrame);
         gl.vertexAttribPointer(this.pointersPreviousFrame.vertexPosition, this.geometry.vertSize, gl.FLOAT, false, 0, 0);
-        gl.uniformMatrix4fv(this.pointersPreviousFrame.projectionMatrix, false, Stage.getRenderer().projectionMatrix);
-        gl.uniformMatrix4fv(this.pointersPreviousFrame.modelViewMatrix, false, Stage.getRenderer().modelViewMatrix);
         gl.uniform1i(this.pointersPreviousFrame.previous, 0);
         gl.activeTexture(gl.TEXTURE0);
         gl.bindTexture(gl.TEXTURE_2D, this.mergeRTT);
-        gl.drawArrays(this.geometry.primtype, 0, this.geometry.nVerts);
+        gl.clearColor(0.0, 0.0, 0.0, 0.0);
+        gl.clear(gl.COLOR_BUFFER_BIT);
+        gl.drawArrays( this.geometry.primtype, 0, this.geometry.nVerts );
+
+        gl.blendFunc(gl.SRC_ALPHA, gl.ONE);
 
         /*     MergeRTT                >> SCREEN           */
-        this.gl.blendFunc(this.gl.SRC_ALPHA, this.gl.ONE);
         gl.bindFramebuffer(gl.FRAMEBUFFER, null);
         gl.drawArrays(this.geometry.primtype, 0, this.geometry.nVerts);
 
