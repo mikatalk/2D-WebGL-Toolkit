@@ -17,7 +17,7 @@ npm install
 npm run build
 ```
 
-### Start Dev Server (make sure to install/build project before)
+### Start Dev Server ### (make sure to install/build project before)
 
 ```
 npm run dev
