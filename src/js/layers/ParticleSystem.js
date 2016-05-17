@@ -7,7 +7,6 @@ const FRAGMENT = `
 
     precision mediump float;
 
-    varying vec2 vUv;
     varying vec4 vColor;
 
     void main() {
@@ -27,7 +26,6 @@ const VERTEX = `
     attribute float size;
     
     varying vec4 vColor;
-    varying vec2 vUv;
 
     void main() {
         // Set the size of the point
@@ -38,7 +36,6 @@ const VERTEX = `
 
         // pass the color to the fragment shader
         vColor = color;
-        vUv = uv.xy;
     }
 
 `;
