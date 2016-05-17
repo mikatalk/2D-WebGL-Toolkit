@@ -10,13 +10,13 @@ import Stats            from './vendors/Stats.min';
 export default class Game {
 
     constructor(options) {
-        let image = new Image();
-        image.onload = () => this.init( image ); 
-        image.src = 'assets/img/field.png';
+    //     let image = new Image();
+    //     image.onload = () => this.init( image ); 
+    //     image.src = 'assets/img/field.png';
 
-    }
+    // }
 
-    init (bgImg) {
+    // init (bgImg) {
 
         Stage.initialize(document.getElementById('canvas'), {
             contain: true
@@ -27,8 +27,8 @@ export default class Game {
 
         this.particleSystem = new ParticleSystem( Stage.getGL(), 1000, { 
             velocity: { 
-                x:0.04, 
-                y:.2
+                x:0.4, 
+                y:1
             }, 
             attenuation: 30,
             size: 40,
@@ -78,14 +78,14 @@ export default class Game {
         this.particleSystem.spawn( 
             this.ball.x - .005 + Math.random()*0.01,
             this.ball.y - .005 + Math.random()*0.01,
-            20,
+            30 * Math.random(),
             Math.random(), Math.random(), Math.random(), Math.random()
         );
 
         this.particleSystem.spawn( 
             this.trailBall.x - .05 + Math.random()*0.1,
             this.trailBall.y - .05 + Math.random()*0.1,
-            50,
+            60 * Math.random(),
             Math.random(), Math.random(), Math.random(), Math.random()
         );
 

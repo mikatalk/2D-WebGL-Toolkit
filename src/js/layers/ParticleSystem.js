@@ -141,8 +141,8 @@ export default class ParticleSystem extends Layer {
             this.positions[i2] += elapsedTime * this.settings.velocity.x;
             this.positions[i2+1] += elapsedTime * this.settings.velocity.y;
 
-            this.colors[i4+3] -= elapsedTime * .4;
-            this.sizes[i] -= elapsedTime * 200;
+            this.colors[i4+3] -= elapsedTime * .9;
+            this.sizes[i] -= elapsedTime * 15;
         }
         this.needsUpdate = true;
     }
