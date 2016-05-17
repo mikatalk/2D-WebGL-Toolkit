@@ -40,7 +40,7 @@ Stage.beforeUpdateHandler( this.update.bind(this) );
 Stage.afterUpdateHandler( null );
 
 // initialize a particle system
-this.particleSystem = new ParticleSystem( Stage.getGL(), 100000, { 
+let particleSystem = new ParticleSystem( Stage.getGL(), 100000, { 
   velocity: { 
     x:0.4, 
     y:1
@@ -50,12 +50,6 @@ this.particleSystem = new ParticleSystem( Stage.getGL(), 100000, {
   rgba: [1,1,1,1]
 });
 Stage.addLayer( this.particleSystem );
-
 // spawn particle:
-this.particleSystem.spawn( 
-  this.trailBall.x - .05 + Math.random()*0.1,
-  this.trailBall.y - .05 + Math.random()*0.1,
-  40 * Math.random(),
-  Math.random(), Math.random(), Math.random(), Math.random()
-);
+particleSystem.spawn( x, y, radius, red, green, blue, alpha );
 ```
