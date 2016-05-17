@@ -314,7 +314,12 @@ export default class LayerSimpleBall extends Layer {
     }
 
     set x(x) { this.dot[0] = x; }
+    get x() { return this.dot[0]; }
+    
     set y(y) { this.dot[1] = y; }
+    get y() { return this.dot[1]; }
+
     set radius(radius) { this.dot[2] = radius; }
+    
     set trail(trail) { this.dot[3] = trail; }
 }

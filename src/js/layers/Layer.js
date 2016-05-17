@@ -33,18 +33,17 @@ export default class Layer {
 
     getDefaultGeometry (gl) {
 
-        var vertexBuffer;
-        vertexBuffer = gl.createBuffer();
+        let vertexBuffer = gl.createBuffer();
         gl.bindBuffer(gl.ARRAY_BUFFER, vertexBuffer);
-        var verts = [
+        var verts = new Float32Array([
              1.0,  1.0,  0.0,
             -1.0,  1.0,  0.0,
              1.0, -1.0,  0.0,
             -1.0, -1.0,  0.0
-        ];
+        ]);
         gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(verts), gl.STATIC_DRAW);
-        var square = {buffer:vertexBuffer, vertSize:3, nVerts:4, primtype:gl.TRIANGLE_STRIP};
-        return square;
+        let geometry = {buffer:vertexBuffer, vertSize:3, nVerts:4, primtype:gl.TRIANGLE_STRIP};
+        return geometry;
     }
 
     getDefaultFragment () { 

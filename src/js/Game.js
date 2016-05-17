@@ -4,6 +4,7 @@ import Stage            from './core/Stage';
 import LayerSimpleBall  from './layers/LayerSimpleBall';
 import LayerBallTrail   from './layers/LayerBallTrail';
 import LayerImage       from './layers/LayerImage';
+import ParticleSystem   from './layers/ParticleSystem';
 import Stats            from './vendors/Stats.min';
 
 export default class Game {
@@ -21,22 +22,29 @@ export default class Game {
             contain: true
         });
 
-        this.bg = new LayerImage( Stage.getGL(), bgImg );
-        Stage.addLayer( this.bg );
+        // this.bg = new LayerImage( Stage.getGL(), bgImg );
+        // Stage.addLayer( this.bg );
+
+        this.particleSystem = new ParticleSystem( Stage.getGL(), 1000, { 
+            velocity: { 
+                x:0.04, 
+                y:.2
+            }, 
+            attenuation: 30,
+            size: 40,
+            rgba: [1,1,1,1]
+        });
+        Stage.addLayer( this.particleSystem );
 
         this.ball = new LayerSimpleBall( Stage.getGL() );
         this.ball.radius = 25.0;
         Stage.addLayer( this.ball );
 
-        this.balls = [];
-        for ( var i=0,l=1; i<l; i++ ) {
-            let ball = new LayerBallTrail( Stage.getGL(), 20, .01 );
-            ball.speedX = 2;
-            ball.speedY = 3;
-            Stage.addLayer( ball );
-            this.balls.push( ball );
-        }
-        
+        this.trailBall = new LayerBallTrail( Stage.getGL(), 20, .01 );
+        this.trailBall.speedX = 2;
+        this.trailBall.speedY = 3;
+        Stage.addLayer( this.trailBall );
+
         Stage.beforeUpdateHandler( this.update.bind(this) );
         Stage.afterUpdateHandler( null );
 
@@ -64,10 +72,22 @@ export default class Game {
         this.ball.x = (Math.sin(this.lifetime*3)+1)/2*.8+.1;
         this.ball.y = (Math.sin(this.lifetime*2.6)+1)/2*.8+.1;
 
-        for ( let ball of this.balls ) {
-            ball.x = (Math.sin(this.lifetime*ball.speedX)+1)/2*.8+.1;
-            ball.y = (Math.sin(this.lifetime*ball.speedY)+1)/2*.8+.1;
-        }
+        this.trailBall.x = (Math.sin(this.lifetime*this.trailBall.speedX)+1)/2*.8+.1;
+        this.trailBall.y = (Math.sin(this.lifetime*this.trailBall.speedY)+1)/2*.8+.1;
+
+        this.particleSystem.spawn( 
+            this.ball.x - .005 + Math.random()*0.01,
+            this.ball.y - .005 + Math.random()*0.01,
+            20,
+            Math.random(), Math.random(), Math.random(), Math.random()
+        );
+
+        this.particleSystem.spawn( 
+            this.trailBall.x - .05 + Math.random()*0.1,
+            this.trailBall.y - .05 + Math.random()*0.1,
+            50,
+            Math.random(), Math.random(), Math.random(), Math.random()
+        );
 
         this.stats.update();
 
